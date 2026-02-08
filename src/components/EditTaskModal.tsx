@@ -20,20 +20,31 @@ export default function EditTaskModal({
   const { updateTask } = useTasks();
   const [status, setStatus] = useState<TaskStatus>("Not Started");
   const [date, setDate] = useState("");
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (task) {
       setStatus(task.status);
       setDate(task.date);
+      setSubmitError(null);
     }
   }, [task]);
 
   if (!isOpen || !task) return null;
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    updateTask(task!.id, { status, date });
-    onClose();
+    if (!task) return;
+    setSubmitError(null);
+    setSaving(true);
+    const result = await updateTask(task.id, { status, date });
+    setSaving(false);
+    if (result.ok) {
+      onClose();
+    } else {
+      setSubmitError(result.error);
+    }
   }
 
   return (
@@ -90,19 +101,24 @@ export default function EditTaskModal({
               className="w-full rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2"
             />
           </div>
+          {submitError && (
+            <p className="text-sm text-red-600 dark:text-red-400">{submitError}</p>
+          )}
           <div className="flex gap-2 justify-end pt-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800"
+              disabled={saving}
+              className="px-4 py-2 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 disabled:opacity-50"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 rounded bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium hover:opacity-90"
+              disabled={saving}
+              className="px-4 py-2 rounded bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 font-medium hover:opacity-90 disabled:opacity-50"
             >
-              Save
+              {saving ? "Saving…" : "Save"}
             </button>
           </div>
         </form>

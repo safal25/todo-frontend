@@ -1,11 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import type { Task } from "@/types/task";
 import { useTasks } from "@/context/TasksContext";
 import TaskRow from "@/components/TaskRow";
+import EditTaskModal from "@/components/EditTaskModal";
 
 export default function CompletedPage() {
-  const { tasks } = useTasks();
+  const { tasks, loading, error } = useTasks();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const grouped = useMemo(() => {
     const completed = tasks.filter((t) => t.status === "Completed");
@@ -23,7 +26,11 @@ export default function CompletedPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Completed Tasks</h1>
-      {grouped.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500 dark:text-gray-400">Loading…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : grouped.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400">
           No completed tasks yet.
         </p>
@@ -36,13 +43,22 @@ export default function CompletedPage() {
               </h2>
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {list.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onEdit={(t) => setEditingTask(t)}
+                  />
                 ))}
               </div>
             </section>
           ))}
         </div>
       )}
+      <EditTaskModal
+        isOpen={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+        task={editingTask}
+      />
     </div>
   );
 }

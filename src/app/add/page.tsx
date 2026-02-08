@@ -15,7 +15,7 @@ export default function AddTaskPage() {
   const [date, setDate] = useState(getToday());
   const [error, setError] = useState("");
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault();
     const trimmed = name.trim();
     if (!trimmed) {
@@ -27,10 +27,14 @@ export default function AddTaskPage() {
       return;
     }
     setError("");
-    addTask({ name: trimmed, date, status: "Not Started" });
-    setName("");
-    setDate(getToday());
-    router.push("/");
+    const result = await addTask({ name: trimmed, date, status: "Not Started" });
+    if (result.ok) {
+      setName("");
+      setDate(getToday());
+      router.push("/");
+    } else {
+      setError(result.error);
+    }
   }
 
   return (
@@ -73,7 +77,7 @@ export default function AddTaskPage() {
         )}
         <button
           type="submit"
-          className="w-full rounded bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-2 font-medium hover:opacity-90"
+          className="w-full rounded bg-gray-900 dark:bg-gray-100 text-white dark:text-gray-900 py-2 font-medium hover:opacity-90 disabled:opacity-50"
         >
           Add Task
         </button>

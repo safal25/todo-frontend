@@ -1,62 +1,109 @@
 "use client";
 
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useEffect,
+} from "react";
 import type { Task, TaskStatus } from "@/types/task";
+import { fetchTasks, createTask, updateTask as updateTaskApi } from "@/lib/tasksApi";
 
-function getToday(): string {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-}
-
-function getDateOffset(days: number): string {
-  const d = new Date();
-  d.setDate(d.getDate() + days);
-  return d.toISOString().slice(0, 10);
-}
-
-const DUMMY_TASKS: Task[] = [
-  { id: "1", name: "Review PR", date: getToday(), status: "Not Started" },
-  { id: "2", name: "Standup", date: getToday(), status: "Completed" },
-  { id: "3", name: "Ship feature", date: getToday(), status: "In Progress" },
-  { id: "4", name: "Plan sprint", date: getDateOffset(1), status: "Not Started" },
-  { id: "5", name: "Demo to team", date: getDateOffset(2), status: "Not Started" },
-  { id: "6", name: "Retro meeting", date: getDateOffset(-1), status: "Completed" },
-  { id: "7", name: "Bug fix deploy", date: getDateOffset(-2), status: "Completed" },
-];
+export type TaskMutationResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
 interface TasksContextValue {
   tasks: Task[];
-  addTask: (task: Omit<Task, "id">) => void;
+  loading: boolean;
+  error: string | null;
+  addTask: (task: Omit<Task, "id">) => Promise<TaskMutationResult>;
   updateTask: (
     id: string,
     updates: Partial<Pick<Task, "status" | "date">>
-  ) => void;
+  ) => Promise<TaskMutationResult>;
 }
 
 const TasksContext = createContext<TasksContextValue | null>(null);
 
 export function TasksProvider({ children }: { children: React.ReactNode }) {
-  const [tasks, setTasks] = useState<Task[]>(DUMMY_TASKS);
+  const [tasks, setTasks] = useState<Task[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const addTask = useCallback((task: Omit<Task, "id">) => {
-    const id =
-      typeof crypto !== "undefined" && crypto.randomUUID
-        ? crypto.randomUUID()
-        : Date.now().toString();
-    setTasks((prev) => [...prev, { ...task, id }]);
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    fetchTasks()
+      .then((data) => {
+        if (!cancelled) {
+          setTasks(data);
+          setError(null);
+        }
+      })
+      .catch((err) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load tasks");
+          setTasks([]);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
+  const addTask = useCallback(
+    async (task: Omit<Task, "id">): Promise<TaskMutationResult> => {
+      setError(null);
+      try {
+        const created = await createTask({
+          name: task.name,
+          date: task.date,
+          status: task.status,
+        });
+        setTasks((prev) => [...prev, created]);
+        return { ok: true };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to create task";
+        setError(message);
+        return { ok: false, error: message };
+      }
+    },
+    []
+  );
+
   const updateTask = useCallback(
-    (id: string, updates: Partial<Pick<Task, "status" | "date">>) => {
-      setTasks((prev) =>
-        prev.map((t) => (t.id === id ? { ...t, ...updates } : t))
-      );
+    async (
+      id: string,
+      updates: Partial<Pick<Task, "status" | "date">>
+    ): Promise<TaskMutationResult> => {
+      setError(null);
+      try {
+        const updated = await updateTaskApi(id, updates);
+        setTasks((prev) =>
+          prev.map((t) => (t.id === id ? updated : t))
+        );
+        return { ok: true };
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : "Failed to update task";
+        setError(message);
+        return { ok: false, error: message };
+      }
     },
     []
   );
 
   return (
-    <TasksContext.Provider value={{ tasks, addTask, updateTask }}>
+    <TasksContext.Provider
+      value={{ tasks, loading, error, addTask, updateTask }}
+    >
       {children}
     </TasksContext.Provider>
   );

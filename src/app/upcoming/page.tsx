@@ -1,16 +1,19 @@
 "use client";
 
-import { useMemo } from "react";
+import { useState, useMemo } from "react";
+import type { Task } from "@/types/task";
 import { useTasks } from "@/context/TasksContext";
 import TaskRow from "@/components/TaskRow";
+import EditTaskModal from "@/components/EditTaskModal";
 
 function getToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
 export default function UpcomingPage() {
-  const { tasks } = useTasks();
+  const { tasks, loading, error } = useTasks();
   const today = getToday();
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   const grouped = useMemo(() => {
     const upcoming = tasks.filter(
@@ -29,7 +32,11 @@ export default function UpcomingPage() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Upcoming Tasks</h1>
-      {grouped.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500 dark:text-gray-400">Loading…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : grouped.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400">
           No upcoming tasks. Add tasks with a future date.
         </p>
@@ -42,13 +49,22 @@ export default function UpcomingPage() {
               </h2>
               <div className="rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 {list.map((task) => (
-                  <TaskRow key={task.id} task={task} />
+                  <TaskRow
+                    key={task.id}
+                    task={task}
+                    onEdit={(t) => setEditingTask(t)}
+                  />
                 ))}
               </div>
             </section>
           ))}
         </div>
       )}
+      <EditTaskModal
+        isOpen={editingTask !== null}
+        onClose={() => setEditingTask(null)}
+        task={editingTask}
+      />
     </div>
   );
 }

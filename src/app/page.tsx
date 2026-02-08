@@ -11,7 +11,7 @@ function getToday(): string {
 }
 
 export default function Home() {
-  const { tasks } = useTasks();
+  const { tasks, loading, error } = useTasks();
   const today = getToday();
   const todayTasks = tasks.filter((t) => t.date === today);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -19,7 +19,11 @@ export default function Home() {
   return (
     <div className="max-w-3xl mx-auto px-4 py-8">
       <h1 className="text-2xl font-bold mb-6">Today&apos;s Tasks</h1>
-      {todayTasks.length === 0 ? (
+      {loading ? (
+        <p className="text-gray-500 dark:text-gray-400">Loading…</p>
+      ) : error ? (
+        <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
+      ) : todayTasks.length === 0 ? (
         <p className="text-gray-500 dark:text-gray-400">
           No tasks for today. Add one from the Add Task page.
         </p>

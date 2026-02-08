@@ -2,6 +2,10 @@
 
 import type { Task } from "@/types/task";
 
+function getToday(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 function PencilIcon() {
   return (
     <svg
@@ -28,20 +32,24 @@ interface TodayTaskRowProps {
 }
 
 export default function TodayTaskRow({ task, onEdit }: TodayTaskRowProps) {
+  const isPast = task.date < getToday();
+
   return (
     <div className="flex items-center gap-3 py-3 px-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
       <span className="font-medium flex-1 min-w-0">{task.name}</span>
       <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">
         {task.status}
       </span>
-      <button
-        type="button"
-        onClick={() => onEdit(task)}
-        className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
-        aria-label="Edit task"
-      >
-        <PencilIcon />
-      </button>
+      {!isPast && (
+        <button
+          type="button"
+          onClick={() => onEdit(task)}
+          className="p-2 rounded hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200"
+          aria-label="Edit task"
+        >
+          <PencilIcon />
+        </button>
+      )}
     </div>
   );
 }
