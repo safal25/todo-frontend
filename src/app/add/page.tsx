@@ -31,7 +31,6 @@ export default function AddTaskPage() {
     if (result.ok) {
       setName("");
       setDate(getToday());
-      router.push("/");
     } else {
       setError(result.error);
     }
