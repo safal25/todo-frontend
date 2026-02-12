@@ -10,10 +10,16 @@ function getToday(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const StatusOrder: Record<string,number> ={
+  "Not Started": 0,
+  "In Progress": 1,
+  "Completed": 2,
+}
+
 export default function Home() {
   const { tasks, loading, error } = useTasks();
   const today = getToday();
-  const todayTasks = tasks.filter((t) => t.date === today);
+  const todayTasks = tasks.filter((t) => t.date === today).sort((a,b)=> StatusOrder[a.status] - StatusOrder[b.status]);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   return (
