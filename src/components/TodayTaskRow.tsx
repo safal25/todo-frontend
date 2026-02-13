@@ -38,6 +38,7 @@ interface TodayTaskRowProps {
 export default function TodayTaskRow({ task, onEdit }: TodayTaskRowProps) {
   const isPast = task.date < getToday();
   const isOverdueIncomplete = isPast && task.status !== "Completed";
+  const isPastAndCompleted = isPast && task.status === "Completed";
 
   return (
     <div
@@ -57,7 +58,7 @@ export default function TodayTaskRow({ task, onEdit }: TodayTaskRowProps) {
       >
         {task.status}
       </span>
-      {!isPast && (
+      {!isPastAndCompleted && (
         <button
           type="button"
           onClick={() => onEdit(task)}
