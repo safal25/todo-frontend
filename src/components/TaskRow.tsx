@@ -32,7 +32,7 @@ interface TaskRowProps {
 }
 
 export default function TaskRow({ task, onEdit }: TaskRowProps) {
-  const isPast = task.date < getToday();
+  const isPastAndCompleted = task.date < getToday() && task.status === "Completed";
 
   return (
     <div className="flex flex-wrap items-center gap-3 py-3 px-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
@@ -43,7 +43,7 @@ export default function TaskRow({ task, onEdit }: TaskRowProps) {
       <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">
         {task.date}
       </span>
-      {!isPast && (
+      {!isPastAndCompleted && (
         <button
           type="button"
           onClick={() => onEdit(task)}
