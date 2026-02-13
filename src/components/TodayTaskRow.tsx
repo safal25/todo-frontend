@@ -3,7 +3,11 @@
 import type { Task } from "@/types/task";
 
 function getToday(): string {
-  return new Date().toISOString().slice(0, 10);
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, "0");
+  const day = String(now.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 function PencilIcon() {
@@ -33,11 +37,24 @@ interface TodayTaskRowProps {
 
 export default function TodayTaskRow({ task, onEdit }: TodayTaskRowProps) {
   const isPast = task.date < getToday();
+  const isOverdueIncomplete = isPast && task.status !== "Completed";
 
   return (
-    <div className="flex items-center gap-3 py-3 px-4 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
+    <div
+      className={`flex items-center gap-3 py-3 px-4 border-b last:border-b-0 ${
+        isOverdueIncomplete
+          ? "border-red-200 bg-red-50/70 dark:border-red-800 dark:bg-red-950/30"
+          : "border-gray-200 dark:border-gray-700"
+      }`}
+    >
       <span className="font-medium flex-1 min-w-0">{task.name}</span>
-      <span className="text-sm text-gray-600 dark:text-gray-400 shrink-0">
+      <span
+        className={`text-sm shrink-0 ${
+          isOverdueIncomplete
+            ? "text-red-700 dark:text-red-300"
+            : "text-gray-600 dark:text-gray-400"
+        }`}
+      >
         {task.status}
       </span>
       {!isPast && (

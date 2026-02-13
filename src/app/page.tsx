@@ -26,10 +26,20 @@ export default function Home() {
 
   const isTodayOrIncomplete = (task: Task): boolean =>
     task.date === today || task.status !== "Completed";
-  const compareByStatus = (a: Task, b: Task): number =>
-    StatusOrder[a.status] - StatusOrder[b.status];
+  const isOverdueIncomplete = (task: Task): boolean =>
+    task.date < today && task.status !== "Completed";
+  const compareForHome = (a: Task, b: Task): number => {
+    const overdueDiff =
+      Number(isOverdueIncomplete(b)) - Number(isOverdueIncomplete(a));
+    if (overdueDiff !== 0) return overdueDiff;
 
-  const todayTasks = tasks.filter(isTodayOrIncomplete).sort(compareByStatus);
+    const statusDiff = StatusOrder[a.status] - StatusOrder[b.status];
+    if (statusDiff !== 0) return statusDiff;
+
+    return a.date.localeCompare(b.date);
+  };
+
+  const todayTasks = tasks.filter(isTodayOrIncomplete).sort(compareForHome);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
 
   return (
